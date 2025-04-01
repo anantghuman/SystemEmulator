@@ -30,11 +30,48 @@ regfile(uint8_t src1, uint8_t src2, uint8_t dst, uint64_t val_w,
         bool w_enable,
         uint64_t *val_a, uint64_t *val_b) {
     // Student TODO
+
 }
 
-static bool 
-cond_holds(cond_t cond, uint8_t flags) {
+static bool cond_holds(cond_t cond, uint8_t flags) {
     // Student TODO
+    // NZCV
+    switch (cond) {
+        case C_EQ:
+            return (flags >> 2) & 1; 
+        case C_NE:
+            return !((flags >> 2) & 1);
+        case C_CS:
+            return (flags >> 1) & 1; 
+        case C_CC:
+            return !((flags >> 1) & 1); 
+        case C_MI:
+            return (flags >> 3) & 1;
+        case C_PL:
+            return !((flags >> 3) & 1);
+        case C_VS:
+            return (flags >> 0) & 1;
+        case C_VC:
+            return !((flags >> 0) & 1);
+        case C_HI:
+            return ((flags >> 1) & 1) && !((flags >> 2) & 1);
+        case C_LS:
+            return !(((flags >> 1) & 1) && !((flags >> 2) & 1));
+        case C_GE:
+            return ((flags >> 3) & 1) == ((flags >> 0) & 1);
+        case C_LT:
+            return ((flags >> 3) & 1) != ((flags >> 0) & 1);
+        case C_GT:
+            return (!((flags >> 2) & 1)) && (((flags >> 3) & 1) == ((flags >> 0) & 1));
+        case C_LE:
+            return ((flags >> 2) & 1) || (((flags >> 3) & 1) != ((flags >> 0) & 1));
+        case C_AL:
+            return true;
+        case C_NV:
+            return false;
+        default:
+            return false;        
+    }
 }
 
 comb_logic_t 
