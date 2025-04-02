@@ -30,7 +30,34 @@ regfile(uint8_t src1, uint8_t src2, uint8_t dst, uint64_t val_w,
         bool w_enable,
         uint64_t *val_a, uint64_t *val_b) {
     // Student TODO
-
+    switch (src1) {
+        case 31:
+            *val_a = guest.proc->SP;
+            break;
+        case 32:
+            *val_a = 0;
+            break;
+        default:
+            *val_a = guest.proc->GPR[src1];
+            break;
+    }
+    switch (src2) {
+        case 31:
+            *val_b = guest.proc->SP;
+            break;
+        case 32:
+            *val_b = 0;
+            break;
+        default:
+            *val_b = guest.proc->GPR[src2];
+            break;
+    }
+    if (w_enable) {
+        if (dst == 31)
+            guest.proc->SP = val_w;
+        else
+            guest.proc->GPR[dst] = val_w;
+    }
 }
 
 static bool cond_holds(cond_t cond, uint8_t flags) {
@@ -68,7 +95,7 @@ static bool cond_holds(cond_t cond, uint8_t flags) {
         case C_AL:
             return true;
         case C_NV:
-            return false;
+            return true;
         default:
             return false;        
     }
@@ -79,6 +106,67 @@ alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw, alu_op_t ALUop, boo
     uint64_t *val_e, bool *cond_val, uint8_t *nzcv) {
     uint64_t res = 0xFEEDFACEDEADBEEF;  // To make it easier to detect errors.
     // Student TODO
+    bool v = false;
+    bool c = false;
+    switch (ALUop) {
+        case PLUS_OP:
+            res = alu_vala + alu_valb;
+            c = res < alu_vala;
+            v = ((alu_vala >> 63) == (alu_valb >> 63)) && ((res >> 63) != (alu_vala >> 63));
+            break;
+        case MINUS_OP:
+            res = alu_vala - alu_valb;
+            c = (alu_vala >= alu_valb);
+            v = ((alu_vala >> 63) != (alu_valb >> 63)) && ((res >> 63) == (alu_vala >> 63));
+            break;
+        case INV_OP:
+            res = alu_vala | ~alu_valb;
+            break;
+        case OR_OP:
+            res = alu_vala | alu_valb;
+            break;
+        case EOR_OP:
+            res = alu_vala ^ alu_valb;
+            break;
+        case AND_OP:
+            res = alu_vala & alu_valb;
+            break;
+        case MOV_OP:
+            res = alu_vala | (alu_valb << alu_valhw);
+            break;
+        case LSL_OP:
+            res = alu_vala << (alu_valb & 0x3FUL);
+            break;
+        case LSR_OP:
+            res = alu_vala >> (alu_valb & 0x3FUL);
+            break;
+        case ASR_OP:
+            res = (int64_t)alu_vala >> (alu_valb & 0x3FUL);
+            break;
+        case PASS_A_OP:
+            res = alu_vala;
+            break;
+    }
+    if (set_flags) {
+        // NZCV
+        *nzcv = 0;
+        if (res == 0) {
+            *nzcv |= 1 << 2; // Z
+        }
+        if ((int64_t)res < 0) {
+            *nzcv |= 1 << 3; // N
+        }
+        if ((alu_vala > 0 && alu_valb > 0 && res < alu_vala) || (alu_vala < 0 && alu_valb < 0 && res > alu_vala)) {
+            *nzcv |= c << 1; // C
+        }
+        if (((alu_vala ^ alu_valb) & (1ULL << 63)) == 0 && ((alu_vala ^ res) & (1ULL << 63)) != 0)
+        {
+            *nzcv |= (v << 0); // V
+        }
+    }
+    *cond_val = cond_holds(cond, *nzcv);
+    *val_e = res;
+    return;
 }
 
 comb_logic_t 
