@@ -39,6 +39,13 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
   }
   // Modify starting here.
   // Student TODO
+  if (M_opcode == OP_B_COND && !M_cond_val) {
+    *current_PC = seq_succ;
+  } else if (D_opcode == OP_RET) {
+    *current_PC = val_a;
+  } else {
+    *current_PC = pred_PC;
+  }
 }
 
 /*
@@ -61,6 +68,17 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
   }
   // Modify starting here.
   // Student TODO
+  if (op == OP_B_COND) {
+    *predicted_PC = current_PC + ((insnbits & 0x3FFFFFF) << 2);
+    *seq_succ = current_PC + 4;
+  } else if (op == OP_B) {
+    *predicted_PC = current_PC + ((insnbits & 0x3FFFFFF) << 2);
+    *seq_succ = *predicted_PC
+  } else {
+    *predicted_PC = current_PC + 4;
+    *seq_succ = current_PC + 4;
+  }
+  
 }
 
 /*
@@ -73,6 +91,17 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
 
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
   // Student TODO
+  if (insnbits == 0x2A0003E0) {
+    *op = OP_LSL;
+  } else if (insnbits == 0x2A0003E1) {
+    *op = OP_LSR;
+  } else if (insnbits == 0x2A0003E2) {
+    *op = OP_ASR;
+  } else if (insnbits == 0x2A0003E3) {
+    *op = OP_ROR;
+  } else if (insnbits == 0x2A0003E4) {
+    *op = OP_RRX;
+  }
 }
 
 /*
@@ -93,7 +122,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
   bool imem_err = 0;
   uint64_t current_PC;
   // Student TODO: Comment this line back in and fill in parameters
-  // select_PC();
+  select_PC(in->pred_PC, );
 
   /*
    * Students: This case is for generating HLT instructions
@@ -106,6 +135,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     imem_err = false;
   } else {
     // Student TODO
+    
   }
 
   if (imem_err || out->op == OP_ERROR) {
