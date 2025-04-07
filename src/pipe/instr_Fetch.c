@@ -68,17 +68,14 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
   }
   // Modify starting here.
   // Student TODO
+  seq_succ += 4;
   if (op == OP_B_COND) {
-    *predicted_PC = current_PC + ((insnbits & 0x3FFFFFF) << 2);
-    *seq_succ = current_PC + 4;
+    *predicted_PC = current_PC + bitfield_s64(insnbits, 23, 19);
   } else if (op == OP_B) {
-    *predicted_PC = current_PC + ((insnbits & 0x3FFFFFF) << 2);
-    *seq_succ = *predicted_PC
+    *predicted_PC = current_PC + bitfield_s64(insnbits, 25, 26);
   } else {
-    *predicted_PC = current_PC + 4;
-    *seq_succ = current_PC + 4;
+    *predicted_PC = seq_succ;
   }
-  
 }
 
 /*
@@ -91,17 +88,14 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
 
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
   // Student TODO
-  if (insnbits == 0x2A0003E0) {
-    *op = OP_LSL;
-  } else if (insnbits == 0x2A0003E1) {
-    *op = OP_LSR;
-  } else if (insnbits == 0x2A0003E2) {
-    *op = OP_ASR;
-  } else if (insnbits == 0x2A0003E3) {
-    *op = OP_ROR;
-  } else if (insnbits == 0x2A0003E4) {
-    *op = OP_RRX;
-  }
+  if (bitfield_u32(insnbits, 30, 7) == 0b10100110)
+    *op = OP_UBFM;
+  if (bitfield_u32(insnbits, 30, 7) == 0b1101011 && bitfield_u32(insnbits, 21, 1) == 0b0)
+    *op = OP_SUBS_RR;
+  if (bitfield_u32(insnbits, 30, 7) == 0b1101010 && bitfield_u32(insnbits, 21, 1) == 0b0)
+    *op = OP_ANDS_RR;
+  if (bitfield_u32(insnbits, 30, 7) == 0b0101011 && bitfield_u32(insnbits, 21, 1) == 0b0) {
+    *op = OP_ADDS_RR;
 }
 
 /*
@@ -122,7 +116,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
   bool imem_err = 0;
   uint64_t current_PC;
   // Student TODO: Comment this line back in and fill in parameters
-  select_PC(in->pred_PC, );
+  select_PC(in->pred_PC, in->);
 
   /*
    * Students: This case is for generating HLT instructions
