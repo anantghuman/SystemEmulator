@@ -50,6 +50,7 @@
  static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
 										int64_t *imm) {
 	// Student TODO
+	if (op == )
  }
  
  /*
@@ -80,6 +81,9 @@
  comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
 							 uint8_t *src2, uint8_t *dst) {
 	// Student TODO
+	if (op == OP_LDUR || op == OP_STUR || op == OP_MVN || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_TST_RR || op == OP_RET) {
+		*src2 = bitfields(insnbits, 16, 2);
+	}
  }
  
  /*
@@ -99,4 +103,6 @@
  
  comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 	// Student TODO
+	out->op = in->op;
+	
 }
