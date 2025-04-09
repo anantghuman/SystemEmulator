@@ -113,7 +113,6 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 			*ALU_op = PLUS_OP;
 			break;
             
-        // Subtraction operations
         case OP_SUB_RI:
 			*ALU_op = MINUS_OP;
 			break;
@@ -124,7 +123,6 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
             *ALU_op = MINUS_OP;
             break;
             
-        // Logical AND operations
         case OP_ANDS_RR:
 			*ALU_op = AND_OP;
 			break;
@@ -132,7 +130,6 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
             *ALU_op = AND_OP;
             break;
 
-		// Shift operations
 		case OP_LSL:
             *ALU_op = LSL_OP;
             break;
@@ -143,17 +140,14 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
             *ALU_op = LSR_OP;
             break;
             
-        // Logical OR operations
         case OP_ORR_RR:
             *ALU_op = OR_OP;
             break;
             
-        // Logical EOR (XOR) operations
         case OP_EOR_RR:
             *ALU_op = EOR_OP;
             break;
 
-        // Logical NOT (implemented as OR with inverted second operand)
         case OP_MVN:
             *ALU_op = INV_OP;
             break;
@@ -170,10 +164,10 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
             break;
             
         case OP_LDUR:
-			*ALU_op = PLUS_OP;  // Address calculation is A + imm
+			*ALU_op = PLUS_OP;
 			break;
         case OP_STUR:
-            *ALU_op = PLUS_OP;  // Address calculation is A + imm
+            *ALU_op = PLUS_OP;
             break;
         default:
             *ALU_op = PASS_A_OP;
@@ -205,10 +199,15 @@ comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
 comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
                           uint8_t *src2, uint8_t *dst) {
     // Student TODO
-    if (op == OP_LDUR || op == OP_STUR || op == OP_MVN || op == OP_ORR_RR ||
-        op == OP_EOR_RR || op == OP_TST_RR || op == OP_RET) {
-        *src2 = bitfields(insnbits, 16, 2);
+	if (op == OP_ANDS_RR || op == OP_TST_RR || op == OP_EOR_RR || op == OP_ORR_RR ||  op == OP_STUR || op == OP_MVN || op == OP_LDUR) {
+        *src1 = bitfield_u32(insnbits, 5, 5);
     }
+    if (op == OP_EOR_RR || op == OP_ORR_RR ||  op == OP_ANDS_RR || op == OP_TST_RR || op == OP_MVN) {
+        *src2 = bitfield_u32(insnbits, 16, 5);
+    }
+    if (op == OP_ORR_RR || op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_LDUR || op == OP_STUR || op == OP_MVN || op == OP_TST_RR || op == OP_MOVK || op == OP_MOVZ || op == OP_ADRP) {
+          *dst = bitfield_u32(insnbits, 0, 5);
+    } 
 }
 
 /*
