@@ -40,6 +40,8 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                                           m_ctl_sigs_t *M_sigs,
                                           w_ctl_sigs_t *W_sigs) {
     // Student TODO
+	X_sigs->set_flags = bitfield_u32(op->, 29, 1);
+	X_sigs->valb_sel = 
 }
 
 /*
@@ -228,4 +230,8 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // Student TODO
     out->op = in->op;
+	extract_immval(in->insnbits, in->op, out->val_imm);
+	out->seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+	out->cond = bitfield_u32(in->insnbits, 0, 4);
+	uint8
 }
