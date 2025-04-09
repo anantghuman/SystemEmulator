@@ -40,8 +40,14 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                                           m_ctl_sigs_t *M_sigs,
                                           w_ctl_sigs_t *W_sigs) {
     // Student TODO
-	X_sigs->set_flags = bitfield_u32(op->, 29, 1);
+	X_sigs->set_flags =
 	X_sigs->valb_sel = 
+	W_sigs->w_enable =
+	W_sigs->wval_sel =
+	M_sigs->dmem_read =
+	M_sigs->dmem_write =
+	D_sigs->src2_sel = 0;
+	D_sigs->src2_sel = 0;
 }
 
 /*
