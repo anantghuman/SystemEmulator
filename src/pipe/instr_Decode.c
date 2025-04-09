@@ -99,6 +99,87 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
  */
 static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
     // Student TODO
+	switch (op) {
+		case OP_ADD_RI:
+			*ALU_op = PLUS_OP;
+			break;
+		case OP_ADDS_RR:
+			*ALU_op = PLUS_OP;
+			break;
+        case OP_ADRP:
+            *ALU_op = PLUS_OP;
+            break;
+        case OP_CMN_RR:    
+			*ALU_op = PLUS_OP;
+			break;
+            
+        // Subtraction operations
+        case OP_SUB_RI:
+			*ALU_op = MINUS_OP;
+			break;
+        case OP_SUBS_RR:
+			*ALU_op = MINUS_OP;
+			break;
+        case OP_CMP_RR:    
+            *ALU_op = MINUS_OP;
+            break;
+            
+        // Logical AND operations
+        case OP_ANDS_RR:
+			*ALU_op = AND_OP;
+			break;
+        case OP_TST_RR:    
+            *ALU_op = AND_OP;
+            break;
+
+		// Shift operations
+		case OP_LSL:
+            *ALU_op = LSL_OP;
+            break;
+        case OP_LSR:
+			*ALU_op = LSR_OP;
+            break;
+        case OP_UBFM:    
+            *ALU_op = LSR_OP;
+            break;
+            
+        // Logical OR operations
+        case OP_ORR_RR:
+            *ALU_op = OR_OP;
+            break;
+            
+        // Logical EOR (XOR) operations
+        case OP_EOR_RR:
+            *ALU_op = EOR_OP;
+            break;
+
+        // Logical NOT (implemented as OR with inverted second operand)
+        case OP_MVN:
+            *ALU_op = INV_OP;
+            break;
+            
+		case OP_ASR:
+            *ALU_op = ASR_OP;
+            break;
+            
+        case OP_MOVK:
+			*ALU_op = MOV_OP;
+			break;
+        case OP_MOVZ:
+            *ALU_op = MOV_OP;
+            break;
+            
+        case OP_LDUR:
+			*ALU_op = PLUS_OP;  // Address calculation is A + imm
+			break;
+        case OP_STUR:
+            *ALU_op = PLUS_OP;  // Address calculation is A + imm
+            break;
+        default:
+            *ALU_op = PASS_A_OP;
+            break;
+    }  
+    return;
 }
 
 /*
