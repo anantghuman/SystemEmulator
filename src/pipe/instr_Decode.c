@@ -44,48 +44,33 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
     X_sigs->valb_sel  = 0;
     W_sigs->w_enable  = 0;
     W_sigs->wval_sel  = 0;
+	W_sigs->dst_sel   = 0;
     M_sigs->dmem_read  = 0;
     M_sigs->dmem_write = 0;
     D_sigs->src2_sel  = 0;
+	
     
-    // Determine if this instruction uses an immediate for the second operand.
-    // (These are the opcodes for which extract_immval() is used.)
-    bool use_immediate = (op == OP_ADD_RI) || (op == OP_SUB_RI) ||
-                         (op == OP_LSL)     || (op == OP_LSR)     ||
-                         (op == OP_ASR)     || (op == OP_UBFM)    ||
-                         (op == OP_LDUR)    || (op == OP_STUR)    ||
-                         (op == OP_MOVK)    || (op == OP_MOVZ)    ||
-                         (op == OP_ADRP);
+   
+    X_sigs->valb_sel = (op == OP_LSL) || (op == OP_LSR) || (op == OP_ASR) || (op == OP_ADDS_RR) ||(op == OP_SUBS_RR) || (op == OP_CMN_RR) || 
+                       (op == OP_CMP_RR) || (op == OP_MVN) || (op == OP_ORR_RR) || 
+                       (op == OP_EOR_RR) || (op == OP_ANDS_RR) || (op == OP_TST_RR);
+                       
 
-    // In the D stage, choose the source for the second operand.
-    D_sigs->src2_sel = use_immediate;
-    // In the X stage, select the immediate (if true) or register second operand.
-    X_sigs->valb_sel = use_immediate;
 
-    // Set the flag update signal in the X stage for instructions that update flags.
-    // Usually the S-type arithmetic operations (and test/compare instructions)
-    // update the condition flags.
+
     X_sigs->set_flags = (op == OP_ADDS_RR) || (op == OP_SUBS_RR) ||
                         (op == OP_ANDS_RR) || (op == OP_TST_RR)  ||
                         (op == OP_CMP_RR)  || (op == OP_CMN_RR);
 
-    // Determine if the instruction writes a result to a register.
-    // Typically, compare and test instructions (which only set flags)
-    // and store instructions do not write back.
+
     W_sigs->w_enable = (op != OP_STUR) && (op != OP_CMP_RR) &&
                        (op != OP_CMN_RR) && (op != OP_TST_RR);
 
-    // In the W stage, select the source of the write-back value.
-    // For load instructions, we want the value read from memory.
+	W_sigs->dst_sel = (op == OP_BL);
     W_sigs->wval_sel = (op == OP_LDUR);
-
-    // In the M stage, set memory operation signals.
-    // Only load instructions should read from data memory.
     M_sigs->dmem_read  = (op == OP_LDUR);
-    // Only store instructions should write to data memory.
     M_sigs->dmem_write = (op == OP_STUR);
-
-    return COMB_LOGIC_OK;
+	D_sigs->src2_sel = (op == OP_STUR);
 }
 
 /*
