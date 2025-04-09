@@ -40,7 +40,7 @@
 											 m_ctl_sigs_t *M_sigs,
 											 w_ctl_sigs_t *W_sigs) {
 	// Student TODO
-	
+
  }
  
  /*
@@ -51,7 +51,53 @@
  static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
 										int64_t *imm) {
 	// Student TODO
-	if (op == )
+	switch (op) {
+        switch (op) {
+			case OP_ADD_RI:
+				*imm = bitfield_u32(insnbits, 10, 12);
+				break;
+			case OP_SUB_RI:
+				*imm = bitfield_u32(insnbits, 10, 12);
+				break;
+			case OP_LSL:
+				*imm = bitfield_u32(insnbits, 10, 12);
+				break;
+			case OP_LSR:
+				*imm = bitfield_u32(insnbits, 10, 12);
+				break;
+			case OP_ASR:
+				*imm = bitfield_u32(insnbits, 10, 12);
+				break;
+			case OP_UBFM:
+				*imm = bitfield_u32(insnbits, 10, 12);
+				break;
+			case OP_LDUR:
+				*imm = bitfield_s64(insnbits, 12, 9);
+				break;
+			case OP_STUR:
+				*imm = bitfield_s64(insnbits, 12, 9);
+				break;			
+			case OP_MOVK:
+				*imm = bitfield_u32(insnbits, 5, 16);
+				break;
+			case OP_MOVZ:
+				*imm = bitfield_u32(insnbits, 5, 16);
+				break;
+			case OP_ADRP:
+				*imm = bitfield_s64(insnbits, 5, 19);
+				break;
+			default:
+				*imm = 0;
+				break;
+		}
+		return;
+	}
+            
+        default:
+            *imm = 0;
+            break;
+    }
+    return;
  }
  
  /*
@@ -73,10 +119,15 @@
  
  comb_logic_t copy_m_ctl_sigs(m_ctl_sigs_t *dest, m_ctl_sigs_t *src) {
 	// Student TODO
+	dest->dmem_read = src->dmem_read;
+	dest->dmem_write = src->dmem_write;
  }
  
  comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
 	// Student TODO
+	dest->dst_sel = src->dst_sel;
+	dest->w_enable = src->w_enable;
+	dest->wval_sel = src->wval_sel;
  }
  
  comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,

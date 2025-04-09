@@ -135,7 +135,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
   uint64_t current_PC;
   // Student TODO: Comment this line back in and fill in parameters
   select_PC(in->pred_PC, D_out->op, X_out->val_a,
-            out->multipurpose_val.seq_succ_PC, M_out->op,
+            D_out->multipurpose_val.seq_succ_PC, M_out->op,
             M_out->cond_holds, out->multipurpose_val.seq_succ_PC, &current_PC);
 
   /*
@@ -167,7 +167,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
       int64_t immhi = bitfield_s64(insnbits, 5, 19);
       int64_t immlo = bitfield_s64(insnbits, 29, 2);
       int64_t imm = (immhi << 2) | immlo;
-      out->multipurpose_val.adrp_val = (current_PC & 0b000000000000) + (imm << 12);
+      out->multipurpose_val.adrp_val = current_PC + (imm << 12);
     }
   }
   if (imem_err || out->op == OP_ERROR) {
