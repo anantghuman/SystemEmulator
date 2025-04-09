@@ -135,7 +135,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
   uint64_t current_PC;
   // Student TODO: Comment this line back in and fill in parameters
   select_PC(in->pred_PC, D_out->op, X_out->val_a,
-            D_out->multipurpose_val.seq_succ_PC, M_out->op,
+            out->multipurpose_val.seq_succ_PC, M_out->op,
             M_out->cond_holds, out->multipurpose_val.seq_succ_PC, &current_PC);
 
   /*
@@ -153,12 +153,23 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     imem(current_PC, &insnbits, &imem_err);
     if (!imem_err) {
       out->insnbits = insnbits;
-      uint32_t i = (insnbits >> 21) & 0x7ff;
+      uint32_t i = bitfield_u32(insnbits, 21, 7);
+      out->op = itable[i];
+      out->print_op = out->op;
+      fix_instr_aliases(insnbits, &out->op);
 
+      uint64_t predPC, seq_succ;
+      predict_PC(current_PC, insnbits, out->op, &predPC, &seq_succ);
+      out->multipurpose_val.seq_succ_PC = seq_succ;
+      in->pred_PC = predPC;
+    }    
+    if (out->op == OP_ADRP) {
+      int64_t immhi = bitfield_s64(insnbits, 5, 19);
+      int64_t immlo = bitfield_s64(insnbits, 29, 2);
+      int64_t imm = (immhi << 2) | immlo;
+      out->multipurpose_val.adrp_val = (current_PC & 0b000000000000) + (imm << 12);
     }
-    predict_PC(current_PC, insnbits, );
   }
-
   if (imem_err || out->op == OP_ERROR) {
     in->status = STAT_INS;
     F_in->status = in->status;
