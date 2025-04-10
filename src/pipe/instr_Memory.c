@@ -35,8 +35,19 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
 
 comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     // Student TODO
-    copy_w_ctl_sigs(&in->W_sigs, &out->W_sigs);
+    out->status = in->status;
+
+    copy_w_ctl_sigs(&out->W_sigs, &in->W_sigs);
+
+    uint64_t dmem_rval = 0;
+    bool dmem_err = false; 
+
+    dmem(in->val_ex, in->val_b, in->M_sigs.dmem_read, in->M_sigs.dmem_write, &dmem_rval, &dmem_err);
+
+    if (dmem_err)
+        out->status = STAT_ADR;
+    out->op = in->op;
+    out->print_op = in->print_op;
     out->val_ex = in->val_ex;
-    out->dst = in->dst;
-    dmem(in->val_ex, in->val_b, in->M_sigs.dmem_read, in->M_sigs.dmem_write, out->val_mem, &dmem_status);
+    out->dst = in->dst; 
 }
