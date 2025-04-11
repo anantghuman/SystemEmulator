@@ -68,13 +68,13 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
   }
   // Modify starting here.
   // Student TODO
-  seq_succ += 4;
+  *seq_succ = current_PC + 4;
   if (op == OP_B_COND) {
-    *predicted_PC = current_PC + bitfield_s64(insnbits, 5, 19);
-  } else if (op == OP_B) {
-    *predicted_PC = current_PC + bitfield_s64(insnbits, 0, 26);
+    *predicted_PC = current_PC + bitfield_s64(insnbits, 5, 19) << 2;
+  } else if (op == OP_B || op == OP_BL) {
+    *predicted_PC = current_PC + bitfield_s64(insnbits, 0, 26) << 2;
   } else {
-    *predicted_PC = seq_succ;
+    *predicted_PC = *seq_succ;
   }
 }
 
@@ -89,7 +89,8 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
   // Student TODO
   if (*op == OP_UBFM) {
-      uint32_t imms = bitfield_u32(insnbits, 10, 6);
+      if (bitfield_u32(insnbits, 31, 1) == 0b1) {
+        uint32_t imms = bitfield_u32(insnbits, 10, 6);
       if (imms != 0b111111 && imms + 1 == bitfield_u32(insnbits, 16, 6))
         *op = OP_LSL;
       else if (imms == 0b111111)
@@ -98,7 +99,11 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
         assert(0);
       }
       return;
+      } else {
+        assert(0);
+      }
   }
+
   if (*op == OP_SUBS_RR) {
     if (bitfield_u32(insnbits, 0, 5) == 0b11111) {
       *op = OP_CMP_RR;
@@ -106,12 +111,12 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
   }
   if (*op == OP_ANDS_RR) {
     if (bitfield_u32(insnbits, 0, 5) == 0b11111) {
-      *op = OP_CMN_RR;
+      *op = OP_TST_RR;
     }
   }
   if (*op == OP_ADDS_RR) {
     if (bitfield_u32(insnbits, 0, 5) == 0b11111) {
-      *op = OP_TST_RR;
+      *op = OP_CMN_RR;
     }
   }
 }
@@ -134,9 +139,9 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
   bool imem_err = 0;
   uint64_t current_PC;
   // Student TODO: Comment this line back in and fill in parameters
-  select_PC(in->pred_PC, D_out->op, X_out->val_a,
+  select_PC(in->pred_PC, X_out->op, X_out->val_a,
             D_out->multipurpose_val.seq_succ_PC, M_out->op,
-            M_out->cond_holds, out->multipurpose_val.seq_succ_PC, &current_PC);
+            M_out->cond_holds, M_out->seq_succ_PC, &current_PC);
 
   /*
    * Students: This case is for generating HLT instructions
@@ -149,25 +154,15 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     imem_err = false;
   } else {
     // Student TODO
-    uint32_t insnbits;
-    imem(current_PC, &insnbits, &imem_err);
-    if (!imem_err) {
-      out->insnbits = insnbits;
-      uint32_t i = bitfield_u32(insnbits, 21, 7);
-      out->op = itable[i];
-      out->print_op = out->op;
-      fix_instr_aliases(insnbits, &out->op);
-
-      uint64_t predPC, seq_succ;
-      predict_PC(current_PC, insnbits, out->op, &predPC, &seq_succ);
-      out->multipurpose_val.seq_succ_PC = seq_succ;
-      in->pred_PC = predPC;
-    }    
-    if (out->op == OP_ADRP) {
-      int64_t immhi = bitfield_s64(insnbits, 5, 19);
-      int64_t immlo = bitfield_s64(insnbits, 29, 2);
-      int64_t imm = (immhi << 2) | immlo;
-      out->multipurpose_val.adrp_val = current_PC + (imm << 12);
+    imem(current_PC, &out->insnbits, &imem_err);
+    out->op = itable[bitfield_u32(out->insnbits, 21, 11)];
+    out->print_op = out->op;
+    fix_instr_aliases(out->insnbits, &out->op);
+    predict_PC(current_PC, out->insnbits, out->op, &guest.proc->PC, &out->multipurpose_val.seq_succ_PC);
+    
+    if (out->op == OP_ADRP)
+    {
+      out->multipurpose_val.seq_succ_PC = current_PC & 0xFFFFFFFFFFFFF000;
     }
   }
   if (imem_err || out->op == OP_ERROR) {
