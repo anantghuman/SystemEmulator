@@ -250,177 +250,69 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
     }
 
     switch (op) {
-        // ONLY ZR
         case OP_ADDS_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
         case OP_CMN_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
         case OP_SUBS_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
-        case OP_CMP_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
-        case OP_MVN:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
-        case OP_ORR_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
-        case OP_EOR_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
-        case OP_ANDS_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
-            break;
-        case OP_TST_RR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
             break;
         case OP_LSL:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
             break;
         case OP_LSR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
             break;
         case OP_ASR:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
+            break;
+        case OP_CMP_RR:
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
+            break;
+        case OP_ORR_RR:
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
+            break;
+        case OP_EOR_RR:
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
             break;
         case OP_RET:
-            if (*dst == 31) {
-                *dst = XZR_NUM;
-            }
-
-            if (*src1 == 31) {
-                *src1 = XZR_NUM;
-            }
-
-            if (*src2 == 31) {
-                *src2 = XZR_NUM;
-            }
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
             break;
-
+        case OP_ANDS_RR:
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
+            break;
+        case OP_TST_RR:
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
+            break;
+        case OP_MVN:
+            if (*src1 == 31) *src1 = XZR_NUM;
+            if (*src2 == 31) *src2 = XZR_NUM;
+            if (*dst == 31) *dst = XZR_NUM;
+            break;
         case OP_LDUR:
             if (*dst == 31) {
                 *dst = XZR_NUM;
