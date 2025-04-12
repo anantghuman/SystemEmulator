@@ -59,8 +59,7 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                         (op == OP_CMP_RR) || (op == OP_CMN_RR);
 
     W_sigs->w_enable = (op != OP_STUR) && (op != OP_CMP_RR) &&
-                       (op != OP_ERROR) &&
-                       (op != OP_CMN_RR) && (op != OP_B) &&
+                       (op != OP_ERROR) && (op != OP_CMN_RR) && (op != OP_B) &&
                        (op != OP_TST_RR) && (op != OP_RET) &&
                        (op != OP_B_COND) && (op != OP_NOP) && (op != OP_HLT);
 
@@ -87,7 +86,7 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
             *imm = bitfield_u32(insnbits, 10, 12);
             break;
         case OP_LSL:
-            *imm = bitfield_u32(insnbits, 10, 12);
+            *imm = 64 - bitfield_u32(insnbits, 16, 6);
             break;
         case OP_LSR:
             *imm = bitfield_u32(insnbits, 16, 6);
@@ -96,7 +95,7 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
             *imm = bitfield_u32(insnbits, 10, 12);
             break;
         case OP_UBFM:
-            *imm = bitfield_u32(insnbits, 16, 6);
+            *imm = bitfield_u32(insnbits, 10, 12);
             break;
         case OP_LDUR:
             *imm = bitfield_s64(insnbits, 12, 9);
@@ -234,9 +233,203 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
     *src1 = bitfield_u32(insnbits, 5, 5);
     *src2 = bitfield_u32(insnbits, 16, 5);
 
-    switch(op)
-}
+    if (op == OP_MOVK) {
+        *src1 = *dst;
+    }
 
+    if (op == OP_MOVZ) {
+        *src1 = XZR_NUM;
+    }
+
+    if (op == OP_STUR) {
+        *src2 = bitfield_u32(insnbits, 0, 5);
+    }
+
+    if (op == OP_BL) {
+        *dst = 30;
+    }
+
+    switch (op) {
+        // ONLY ZR
+        case OP_ADDS_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_CMN_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_SUBS_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_CMP_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_MVN:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_ORR_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_EOR_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_ANDS_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_TST_RR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_LSL:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_LSR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_ASR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        case OP_RET:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            }
+
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+
+        case OP_LDUR:
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+            break;
+        default:
+            break;
+    }
+}
 
 /*
  * Decode stage logic.
@@ -260,8 +453,8 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     generate_DXMW_control(in->op, &D_sigs, &out->X_sigs, &out->M_sigs,
                           &out->W_sigs);
     extract_regs(in->insnbits, in->op, &src1, &src2, &dst);
-    regfile(src1, src2, W_out->dst, W_wval, W_out->W_sigs.w_enable,
-        &out->val_a, &out->val_b);
+    regfile(src1, src2, W_out->dst, W_wval, W_out->W_sigs.w_enable, &out->val_a,
+            &out->val_b);
     extract_immval(in->insnbits, in->op, &out->val_imm);
     decide_alu_op(in->op, &out->ALU_op);
     if (in->op == OP_B_COND) {
@@ -285,8 +478,9 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
     out->dst = dst;
     out->print_op = in->print_op;
-    out->seq_succ_PC = OP_ADRP ? in->multipurpose_val.adrp_val : in->multipurpose_val.seq_succ_PC;
-    
+    out->seq_succ_PC = OP_ADRP ? in->multipurpose_val.adrp_val
+                               : in->multipurpose_val.seq_succ_PC;
+
     out->op = in->op;
     out->status = in->status;
 }
