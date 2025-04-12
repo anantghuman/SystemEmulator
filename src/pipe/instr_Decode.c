@@ -254,10 +254,12 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
             if (*src1 == 31) *src1 = XZR_NUM;
             if (*src2 == 31) *src2 = XZR_NUM;
             if (*dst == 31) *dst = XZR_NUM;
+            break;
         case OP_CMN_RR:
             if (*src1 == 31) *src1 = XZR_NUM;
             if (*src2 == 31) *src2 = XZR_NUM;
             if (*dst == 31) *dst = XZR_NUM;
+            break;
         case OP_SUBS_RR:
             if (*src1 == 31) *src1 = XZR_NUM;
             if (*src2 == 31) *src2 = XZR_NUM;
