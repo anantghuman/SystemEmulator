@@ -59,8 +59,8 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                         (op == OP_CMP_RR) || (op == OP_CMN_RR);
 
     W_sigs->w_enable = (op != OP_STUR) && (op != OP_CMP_RR) &&
-                       (op != OP_ERROR) && (op != OP_ERROR) &&
-                       (op != OP_CMN_RR) && (op != OP_TST_RR) && (op != OP_B) &&
+                       (op != OP_ERROR) &&
+                       (op != OP_CMN_RR) && (op != OP_B) &&
                        (op != OP_TST_RR) && (op != OP_RET) &&
                        (op != OP_B_COND) && (op != OP_NOP) && (op != OP_HLT);
 
@@ -86,18 +86,17 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
         case OP_SUB_RI:
             *imm = bitfield_u32(insnbits, 10, 12);
             break;
-        case OP_LSL: {
-        }
-            *imm = 0;
+        case OP_LSL:
+            *imm = bitfield_u32(insnbits, 10, 12);
             break;
         case OP_LSR:
             *imm = bitfield_u32(insnbits, 16, 6);
             break;
         case OP_ASR:
-            *imm = bitfield_u32(insnbits, 16, 6);
+            *imm = bitfield_u32(insnbits, 10, 12);
             break;
         case OP_UBFM:
-            *imm = bitfield_u32(insnbits, 10, 12);
+            *imm = bitfield_u32(insnbits, 16, 6);
             break;
         case OP_LDUR:
             *imm = bitfield_s64(insnbits, 12, 9);
@@ -235,43 +234,9 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
     *src1 = bitfield_u32(insnbits, 5, 5);
     *src2 = bitfield_u32(insnbits, 16, 5);
 
-    if (op == OP_MOVK) {
-        *src1 = *dst;
-    }
-
-    if (op == OP_MOVZ) {
-        *src1 = XZR_NUM;
-    }
-
-    if (op == OP_STUR) {
-        *src2 = *src1;
-    }
-
-    if (op == OP_BL) {
-        *dst = 30;
-    }
-
-    if ((op == OP_ADDS_RR) || (op == OP_SUBS_RR) || (op == OP_CMN_RR) ||
-        (op == OP_CMP_RR) || (op == OP_TST_RR) || (op == OP_ORR_RR) ||
-        (op == OP_ANDS_RR) || (op == OP_EOR_RR) || (op == OP_LSL) ||
-        (op == OP_LSR) || (op == OP_ASR) || (op == OP_RET) || (op == OP_MVN)) {
-        if (*dst == 31) {
-            *dst = 32;
-        }
-
-        if (*src1 == 31) {
-            *src1 = 32;
-        }
-
-        if (*src2 == 31) {
-            *src2 = 32;
-        }
-    }
-
-
-    if (op == OP_LDUR && *dst == 31)
-        *dst = 32;
+    switch(op)
 }
+
 
 /*
  * Decode stage logic.
@@ -294,16 +259,34 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     uint8_t src1, src2, dst;
     generate_DXMW_control(in->op, &D_sigs, &out->X_sigs, &out->M_sigs,
                           &out->W_sigs);
+    extract_regs(in->insnbits, in->op, &src1, &src2, &dst);
+    regfile(src1, src2, W_out->dst, W_wval, W_out->W_sigs.w_enable,
+        &out->val_a, &out->val_b);
     extract_immval(in->insnbits, in->op, &out->val_imm);
     decide_alu_op(in->op, &out->ALU_op);
-    if (in->op == OP_B_COND)
+    if (in->op == OP_B_COND) {
         out->cond = (cond_t)(bitfield_u32(in->insnbits, 0, 4));
-    extract_regs(in->insnbits, in->op, &src1, &src2, &dst);
+    }
+    if (in->op == OP_ADRP) {
+        out->val_a = in->multipurpose_val.adrp_val;
+    }
+    if (in->op == OP_MOVK || in->op == OP_MOVZ) {
+        out->val_b = out->val_imm;
+        out->val_hw = bitfield_u32(in->insnbits, 21, 2) << 4;
+        if (in->op == OP_MOVZ) {
+            out->val_a = 0;
+        } else {
+            out->val_a = out->val_a & ~(0xFFFFUL << out->val_hw);
+        }
+
+    } else {
+        out->val_hw = 0;
+    }
+
     out->dst = dst;
     out->print_op = in->print_op;
-    out->seq_succ_PC = in->multipurpose_val.seq_succ_PC;
-    regfile(src1, src2, dst, W_out->W_sigs.wval_sel, W_out->W_sigs.w_enable,
-            &out->val_a, &out->val_b);
+    out->seq_succ_PC = OP_ADRP ? in->multipurpose_val.adrp_val : in->multipurpose_val.seq_succ_PC;
+    
     out->op = in->op;
     out->status = in->status;
 }

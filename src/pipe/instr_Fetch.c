@@ -89,16 +89,18 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
   // Student TODO
   if (*op == OP_UBFM) {
-      if (bitfield_u32(insnbits, 31, 1) == 0b1) {
+      if (bitfield_u32(insnbits, 31, 1) == 0b1 && bitfield_u32(insnbits, 22, 1) == 0b1) {
         uint32_t imms = bitfield_u32(insnbits, 10, 6);
-      if (imms != 0b111111 && imms + 1 == bitfield_u32(insnbits, 16, 6))
-        *op = OP_LSL;
-      else if (imms == 0b111111)
-        *op = OP_LSR;
+      
+        if (imms == 0b111111) {
+          *op = OP_LSR;
+        } else if (imms + 1 == bitfield_u32(insnbits, 16, 6)) {
+            *op = OP_LSL;
+        }
+       
       else {
         assert(0);
       }
-      return;
       } else {
         assert(0);
       }
@@ -156,7 +158,6 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     // Student TODO
     imem(current_PC, &out->insnbits, &imem_err);
     out->op = itable[bitfield_u32(out->insnbits, 21, 11)];
-    out->print_op = out->op;
     fix_instr_aliases(out->insnbits, &out->op);
     predict_PC(current_PC, out->insnbits, out->op, &guest.proc->PC, &out->multipurpose_val.seq_succ_PC);
     
@@ -175,6 +176,5 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     in->status = STAT_AOK;
   }
   out->status = in->status;
-
-  return;
+  out->print_op = out->op;
 }

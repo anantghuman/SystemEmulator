@@ -38,10 +38,9 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     copy_w_ctl_sigs(&out->W_sigs, &in->W_sigs);
 
     bool dmem_err = false; 
-    
-    out->status = in->status;
-    dmem(in->val_ex, in->val_b, in->M_sigs.dmem_read, in->M_sigs.dmem_write, &out->val_mem, &dmem_err);
-
+    if (in->M_sigs.dmem_read || in->M_sigs.dmem_write) {
+        dmem(in->val_ex, in->val_b, in->M_sigs.dmem_read, in->M_sigs.dmem_write, &out->val_mem, &dmem_err);
+    }
     out->status = in->status;
     if (dmem_err)
         out->status = STAT_ADR;

@@ -63,41 +63,39 @@ static bool cond_holds(cond_t cond, uint8_t flags) {
     // NZCV
     switch (cond) {
         case C_EQ:
-            return (flags >> 2) & 1;
+            return GET_ZF(flags);
         case C_NE:
-            return !((flags >> 2) & 1);
+            return !GET_ZF(flags);
         case C_CS:
-            return (flags >> 1) & 1;
+            return GET_CF(flags);
         case C_CC:
-            return !((flags >> 1) & 1);
+            return !GET_CF(flags);
         case C_MI:
-            return (flags >> 3) & 1;
+            return GET_NF(flags);
         case C_PL:
-            return !((flags >> 3) & 1);
+            return !GET_NF(flags);
         case C_VS:
-            return (flags >> 0) & 1;
+            return GET_VF(flags);
         case C_VC:
-            return !((flags >> 0) & 1);
+            return !GET_VF(flags);
         case C_HI:
-            return ((flags >> 1) & 1) && !((flags >> 2) & 1);
+            return GET_CF(flags) && !GET_VF(flags);
         case C_LS:
-            return !(((flags >> 1) & 1) && !((flags >> 2) & 1));
+            return !(GET_CF(flags) && !GET_ZF(flags));
         case C_GE:
-            return ((flags >> 3) & 1) == ((flags >> 0) & 1);
+            return GET_NF(flags) == GET_VF(flags);
         case C_LT:
-            return ((flags >> 3) & 1) != ((flags >> 0) & 1);
+            return GET_NF(flags) != GET_VF(flags);
         case C_GT:
-            return (!((flags >> 2) & 1)) &&
-                   (((flags >> 3) & 1) == ((flags >> 0) & 1));
+            return !GET_ZF(flags) && (GET_NF(flags) == GET_VF(flags));
         case C_LE:
-            return ((flags >> 2) & 1) ||
-                   (((flags >> 3) & 1) != ((flags >> 0) & 1));
+            return !(!GET_ZF(flags) && (GET_NF(flags) == GET_VF(flags)));
         case C_AL:
             return true;
         case C_NV:
             return true;
         default:
-            return false;
+            return true;
     }
 }
 
@@ -110,18 +108,25 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
     bool c = false;                     // Carry flag indicator.
 
     switch (ALUop) {
-        case PLUS_OP:
+        case PLUS_OP: {
             res = alu_vala + alu_valb;
-            c = (res < alu_vala);
-            v = ((alu_vala >> 63) == (alu_valb >> 63)) &&
-                ((res >> 63) != (alu_vala >> 63));
+            int64_t res2 = (int64_t)alu_vala + (int64_t)alu_valb;
+            c = (res < alu_vala || res < alu_valb);
+            bool pos = ((int64_t)alu_vala < 0 && (int64_t)alu_valb < 0 && res2 >= 0);
+            bool neg =  ((int64_t)alu_vala > 0 && (int64_t)alu_valb > 0 && res2 <= 0);
+            v = pos || neg;
             break;
-        case MINUS_OP:
+        }   
+        case MINUS_OP: {
             res = alu_vala - alu_valb;
-            c = (alu_vala >= alu_valb);
-            v = ((alu_vala >> 63) != (alu_valb >> 63)) &&
-                ((res >> 63) == (alu_vala >> 63));
+            uint64_t inv = ~alu_valb + 1;
+            int64_t res2 = (int64_t)alu_vala - (int64_t)alu_valb;
+            c = (res < alu_vala || res < inv);
+            bool pos = ((int64_t)alu_vala < 0 && (int64_t)inv < 0 && res2 >= 0);
+            bool neg =  ((int64_t)alu_vala > 0 && (int64_t)inv > 0 && res2 <= 0);
+            v = pos || neg;
             break;
+        }
         case INV_OP:
             res = alu_vala | ~alu_valb;
             break;

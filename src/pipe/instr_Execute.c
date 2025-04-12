@@ -32,16 +32,21 @@
  
  comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
 
-    copy_m_ctl_sigs(&out->M_sigs, &in->M_sigs);
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->val_b = in->val_b;
+    out->dst = in->dst;
+	out->status = in->status;
+
+	copy_m_ctl_sigs(&out->M_sigs, &in->M_sigs);
     copy_w_ctl_sigs(&out->W_sigs, &in->W_sigs);
 
     uint64_t alu_operand_b = in->X_sigs.valb_sel ? in->val_b : in->val_imm;
 
     alu(in->val_a, alu_operand_b, in->val_hw, in->ALU_op, in->X_sigs.set_flags, in->cond, &out->val_ex, &out->cond_holds, &guest.proc->NZCV);
 
-    out->op = in->op;
-    out->print_op = in->print_op;
-    out->val_b = in->val_b;
-    out->dst = in->dst;
-	out->status = in->status;
+	if (in->op == OP_BL) {
+		out->val_ex = in->seq_succ_PC;
+	}
+	out->seq_succ_PC = in->seq_succ_PC;
  }

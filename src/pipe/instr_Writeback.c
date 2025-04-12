@@ -32,13 +32,7 @@ extern int64_t W_wval;
 */
 comb_logic_t wback_instr(w_instr_impl_t *in) {
     // Student TODO
-    // if (in->status == STAT_BUB)
-    //     return;
-    // if (in -> status != STAT_AOK) {
-    //     guest.proc->status = in->status;
-    //     return;
-    // }
-    W_wval = (in->W_sigs.wval_sel  && in->W_sigs.w_enable) ? in->val_ex : in->val_mem;    
+    W_wval = (in->W_sigs.wval_sel  && in->W_sigs.w_enable) ? in->val_mem : in->val_ex;    
     W_out->dst = in->dst;
     W_out->W_sigs.w_enable = in->W_sigs.w_enable;
 }
