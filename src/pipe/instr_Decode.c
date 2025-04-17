@@ -349,6 +349,11 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     extract_regs(in->insnbits, in->op, &src1, &src2, &dst);
     regfile(src1, src2, W_out->dst, W_wval, W_out->W_sigs.w_enable, &out->val_a,
             &out->val_b);
+    forward_reg(src1, src2, X_out->dst, W_in->dst, W_out->dst, M_in->val_ex,
+                W_in->val_ex, W_in->val_mem, W_wval, W_wval,
+                W_in->W_sigs.wval_sel, W_out->W_sigs.wval_sel,
+                M_in->W_sigs.w_enable, W_in->W_sigs.w_enable,
+                W_out->W_sigs.w_enable, &out->val_a, &out->val_b);
     extract_immval(in->insnbits, in->op, &out->val_imm);
     decide_alu_op(in->op, &out->ALU_op);
     if (in->op == OP_B_COND) {

@@ -20,35 +20,16 @@ comb_logic_t forward_reg(uint8_t D_src1, uint8_t D_src2, uint8_t X_dst,
   //STUDENT TODO
   if (D_src1 == X_dst && X_w_enable) {
     *val_a = X_val_ex;
-  } else if (D_src2 == X_dst && X_w_enable) {
-    *val_b = X_val_ex;
   } else if (D_src1 == M_dst && M_w_enable) {
     *val_a = M_wval_sel ? M_val_mem : M_val_ex;
+  } else if (D_src2 == W_dst && W_w_enable) {
+    *val_a = W_wval_sel ? W_val_mem : W_val_ex;
+  } 
+  if (D_src2 == X_dst && X_w_enable) {
+    *val_b = X_val_ex;
   } else if (D_src2 == M_dst && M_w_enable) {
-    *val_a = W_wval_sel ? M_val_mem : M_val_ex;
-  } else {
-    *val_a = 
+    *val_b = M_wval_sel ? M_val_mem : M_val_ex;
+  } else if (D_src2 == W_dst && W_w_enable) {
+    *val_b = W_wval_sel ? W_val_mem : W_val_ex;
   }
-
-  if ( )
-
-  // if (X_w_enable && (X_dst == D_src1 || X_dst == D_src2)) {
-  //   if (X_dst == D_src1) {
-  //     *val_a = X_val_ex;
-  //   } else {
-  //     *val_b = X_val_ex;
-  //   }
-  // } else if (M_w_enable && (M_dst == D_src1 || M_dst == D_src2)) {
-  //   if (M_dst == D_src1) {
-  //     *val_a = M_val_ex;
-  //   } else {
-  //     *val_b = M_val_ex;
-  //   }
-  // } else if (W_w_enable && (W_dst == D_src1 || W_dst == D_src2)) {
-  //   if (W_dst == D_src1) {
-  //     *val_a = W_val_ex;
-  //   } else {
-  //     *val_b = W_val_ex;
-  //   }
-  // }
 }
