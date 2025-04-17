@@ -101,22 +101,22 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     // Student TODO WEEK 3
     if (check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)) {
         pipe_control_stage(S_FETCH, false, true);
-        pipe_control_stage(S_FETCH, false, true);
-        pipe_control_stage(S_FETCH, true, false);
-        pipe_control_stage(S_FETCH, false, false);
-        pipe_control_stage(S_FETCH, false, false);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, true, false);
+        pipe_control_stage(S_MEMORY, false, false);
+        pipe_control_stage(S_WBACK, false, false);
     } else if (check_mispred_branch_hazard(X_opcode, X_condval)) {
         pipe_control_stage(S_FETCH, false, false);
-        pipe_control_stage(S_FETCH, true, false);
-        pipe_control_stage(S_FETCH, true, false);
-        pipe_control_stage(S_FETCH, false, false);
-        pipe_control_stage(S_FETCH, false, false);
+        pipe_control_stage(S_DECODE, true, false);
+        pipe_control_stage(S_EXECUTE, true, false);
+        pipe_control_stage(S_MEMORY, false, false);
+        pipe_control_stage(S_WBACK, false, false);
     } else if (check_ret_hazard(D_opcode)) {
         pipe_control_stage(S_FETCH, false, true);
-        pipe_control_stage(S_FETCH, true, false);
-        pipe_control_stage(S_FETCH, false, false);
-        pipe_control_stage(S_FETCH, false, false);
-        pipe_control_stage(S_FETCH, false, false);
+        pipe_control_stage(S_DECODE, true, false);
+        pipe_control_stage(S_EXECUTE, false, false);
+        pipe_control_stage(S_MEMORY, false, false);
+        pipe_control_stage(S_WBACK, false, false);
     } else {
         bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS;
         pipe_control_stage(S_FETCH, false, f_stall);
