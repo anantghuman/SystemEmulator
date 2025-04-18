@@ -121,7 +121,7 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
             res = alu_vala - alu_valb;
             uint64_t inv = ~alu_valb + 1;
             int64_t res2 = (int64_t)alu_vala - (int64_t)alu_valb;
-            c = (res < alu_vala || res < inv);
+            c = (res < alu_vala || res < inv || alu_valb == 0);
             bool pos = ((int64_t)alu_vala < 0 && (int64_t)inv < 0 && res2 >= 0);
             bool neg =  ((int64_t)alu_vala > 0 && (int64_t)inv > 0 && res2 <= 0);
             v = pos || neg;
