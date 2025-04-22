@@ -177,7 +177,7 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
         if (line[j].valid && line[j].tag == t) {
             return &line[j];
         }
-        if (!line[j].valid) {
+        if (!empty && !line[j].valid) {
             empty = &line[j];
         }
         if (lru == NULL || line[j].lru < lru->lru) {
@@ -193,7 +193,21 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
     // Student TODO
-
+    unsigned int t = extract_tag(addr);
+    unsigned int i = extract_index(addr);
+    cache_line_t* line = (cache->sets)[i].lines;
+    for (int j = 0; j < cache->A; j++) {
+        if (line[j].valid && line[j].tag == t) {
+            hit_count++;
+            line[j].lru = next_lru++;
+            if (operation == WRITE) {
+                line[j].dirty = 1;
+            }
+            return true;
+        }
+    }
+    miss_count++;
+    return false;
 }
 
 /*  STUDENT TO-DO:
@@ -214,6 +228,15 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     // Student TODO
+    unsigned int t = extract_tag(addr);
+    unsigned int i = extract_index(addr);
+    cache_line_t* line = (cache->sets)[i].lines;
+    for (int j = 0; j < cache->A; j++) {
+        if (line[j].valid && line[j].tag == t) {
+            memcpy(dest, line[j].data, sizeof(word_t));
+            return;
+        }
+    }
 }
 
 /* STUDENT TO-DO:
@@ -222,6 +245,16 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     // Student TODO
+    unsigned int t = extract_tag(addr);
+    unsigned int i = extract_index(addr);
+    cache_line_t* line = (cache->sets)[i].lines;
+    for (int j = 0; j < cache->A; j++) {
+        if (line[j].valid && line[j].tag == t) {
+            memcpy(line[j].data, val, sizeof(word_t));
+            return;
+        }
+    }
+    
 }
 
 /*
