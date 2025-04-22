@@ -1,52 +1,53 @@
 /**************************************************************************
-  * C S 429 system emulator
- * 
+ * C S 429 system emulator
+ *
  * cache.c - A cache simulator that can replay traces from Valgrind
  *     and output statistics such as number of hits, misses, and
- *     evictions, both dirty and clean.  The replacement policy is LRU. 
- *     The cache is a writeback cache. 
- * 
- * Copyright (c) 2021, 2023, 2024, 2025. 
+ *     evictions, both dirty and clean.  The replacement policy is LRU.
+ *     The cache is a writeback cache.
+ *
+ * Copyright (c) 2021, 2023, 2024, 2025.
  * Authors: M. Hinton, Z. Leeper.
  * All rights reserved.
  * May not be used, modified, or copied without permission.
- **************************************************************************/ 
-#include <getopt.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <assert.h>
-#include <limits.h>
-#include <string.h>
-#include <errno.h>
+ **************************************************************************/
 #include "cache.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <getopt.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define ADDRESS_LENGTH 64
 
 /* Counters used to record cache statistics in printSummary().
    test-cache uses these numbers to verify correctness of the cache. */
 
-//Increment when a miss occurs
+// Increment when a miss occurs
 int miss_count = 0;
 
-//Increment when a hit occurs
+// Increment when a hit occurs
 int hit_count = 0;
 
-//Increment when a dirty eviction occurs
+// Increment when a dirty eviction occurs
 int dirty_eviction_count = 0;
 
-//Increment when a clean eviction occurs
+// Increment when a clean eviction occurs
 int clean_eviction_count = 0;
 
 /* STUDENT TO-DO: add more globals, structs, macros if necessary */
 uword_t next_lru;
 
 static size_t _log(size_t x) {
-  size_t result = 0;
-  while(x>>=1)  {
-    result++;
-  }
-  return result;
+    size_t result = 0;
+    while (x >>= 1) {
+        result++;
+    }
+    return result;
 }
 
 /*
@@ -65,15 +66,16 @@ cache_t *create_cache(int A_in, int B_in, int C_in, int d_in) {
     cache->d = d_in;
     unsigned int S = cache->C / (cache->A * cache->B);
 
-    cache->sets = (cache_set_t*) calloc(S, sizeof(cache_set_t));
-    for (unsigned int i = 0; i < S; i++){
-        cache->sets[i].lines = (cache_line_t*) calloc(cache->A, sizeof(cache_line_t));
-        for (unsigned int j = 0; j < cache->A; j++){
+    cache->sets = (cache_set_t *)calloc(S, sizeof(cache_set_t));
+    for (unsigned int i = 0; i < S; i++) {
+        cache->sets[i].lines =
+            (cache_line_t *)calloc(cache->A, sizeof(cache_line_t));
+        for (unsigned int j = 0; j < cache->A; j++) {
             cache->sets[i].lines[j].valid = 0;
-            cache->sets[i].lines[j].tag   = 0;
-            cache->sets[i].lines[j].lru   = 0;
+            cache->sets[i].lines[j].tag = 0;
+            cache->sets[i].lines[j].lru = 0;
             cache->sets[i].lines[j].dirty = 0;
-            cache->sets[i].lines[j].data  = calloc(cache->B, sizeof(byte_t));
+            cache->sets[i].lines[j].data = calloc(cache->B, sizeof(byte_t));
         }
     }
 
@@ -83,32 +85,37 @@ cache_t *create_cache(int A_in, int B_in, int C_in, int d_in) {
 }
 
 cache_t *create_checkpoint(cache_t *cache) {
-    unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
+    unsigned int S = (unsigned int)cache->C / (cache->A * cache->B);
     cache_t *copy_cache = malloc(sizeof(cache_t));
     memcpy(copy_cache, cache, sizeof(cache_t));
-    copy_cache->sets = (cache_set_t*) calloc(S, sizeof(cache_set_t));
+    copy_cache->sets = (cache_set_t *)calloc(S, sizeof(cache_set_t));
     for (unsigned int i = 0; i < S; i++) {
-        copy_cache->sets[i].lines = (cache_line_t*) calloc(cache->A, sizeof(cache_line_t));
+        copy_cache->sets[i].lines =
+            (cache_line_t *)calloc(cache->A, sizeof(cache_line_t));
         for (unsigned int j = 0; j < cache->A; j++) {
-            memcpy(&copy_cache->sets[i].lines[j], &cache->sets[i].lines[j], sizeof(cache_line_t));
-            copy_cache->sets[i].lines[j].data = calloc(cache->B, sizeof(byte_t));
-            memcpy(copy_cache->sets[i].lines[j].data, cache->sets[i].lines[j].data, sizeof(byte_t));
+            memcpy(&copy_cache->sets[i].lines[j], &cache->sets[i].lines[j],
+                   sizeof(cache_line_t));
+            copy_cache->sets[i].lines[j].data =
+                calloc(cache->B, sizeof(byte_t));
+            memcpy(copy_cache->sets[i].lines[j].data,
+                   cache->sets[i].lines[j].data, sizeof(byte_t));
         }
     }
-    
+
     return copy_cache;
 }
 
 void display_set(cache_t *cache, unsigned int set_index) {
-    unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
+    unsigned int S = (unsigned int)cache->C / (cache->A * cache->B);
     if (set_index < S) {
         cache_set_t *set = &cache->sets[set_index];
         for (unsigned int i = 0; i < cache->A; i++) {
-            printf ("Valid: %d Tag: %llx Lru: %lld Dirty: %d\n", set->lines[i].valid, 
-                set->lines[i].tag, set->lines[i].lru, set->lines[i].dirty);
+            printf("Valid: %d Tag: %llx Lru: %lld Dirty: %d\n",
+                   set->lines[i].valid, set->lines[i].tag, set->lines[i].lru,
+                   set->lines[i].dirty);
         }
     } else {
-        printf ("Invalid Set %d. 0 <= Set < %d\n", set_index, S);
+        printf("Invalid Set %d. 0 <= Set < %d\n", set_index, S);
     }
 }
 
@@ -116,8 +123,8 @@ void display_set(cache_t *cache, unsigned int set_index) {
  * Free allocated memory. Feel free to modify it
  */
 void free_cache(cache_t *cache) {
-    unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
-    for (unsigned int i = 0; i < S; i++){
+    unsigned int S = (unsigned int)cache->C / (cache->A * cache->B);
+    for (unsigned int i = 0; i < S; i++) {
         for (unsigned int j = 0; j < cache->A; j++) {
             free(cache->sets[i].lines[j].data);
         }
@@ -126,7 +133,17 @@ void free_cache(cache_t *cache) {
     free(cache->sets);
     free(cache);
 }
+unsigned int extract_index(uword_t addr) {
+    return (addr << 2) & 0b111;
+}
 
+unsigned int extract_tag(uword_t addr) {
+    return (addr >> 5) & 0b11111111;
+}
+
+unsigned int extract_offset(uword_t addr) {
+    return addr & 0b11;
+}
 /* STUDENT TO-DO:
  * Get the line for address contained in the cache
  * On hit, return the cache line holding the address
@@ -134,6 +151,15 @@ void free_cache(cache_t *cache) {
  */
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
     // Student TODO
+    unsigned int t = extract_tag(addr);
+    unsigned int i = extract_index(addr);
+    cache_line_t* line = (cache->sets)[i].lines;
+    for (int j = 0; j < cache->A; j++) {
+        if (line[j].valid && line[j].tag == t) {
+            return &line[j];
+        }
+    }
+    return NULL;
 }
 
 /* STUDENT TO-DO:
@@ -142,6 +168,23 @@ cache_line_t *get_line(cache_t *cache, uword_t addr) {
  */
 cache_line_t *select_line(cache_t *cache, uword_t addr) {
     // Student TODO
+    unsigned int t = extract_tag(addr);
+    unsigned int i = extract_index(addr);
+    cache_line_t* line = (cache->sets)[i].lines;
+    cache_line_t* empty = NULL;
+    cache_line_t* lru = NULL;
+    for (int j = 0; j < cache->A; j++) {
+        if (line[j].valid && line[j].tag == t) {
+            return &line[j];
+        }
+        if (!line[j].valid) {
+            empty = &line[j];
+        }
+        if (lru == NULL || line[j].lru < lru->lru) {
+            lru = &line[j];
+        }
+    }
+    return empty ? empty : lru;
 }
 
 /*  STUDENT TO-DO:
@@ -150,15 +193,17 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
     // Student TODO
+
 }
 
 /*  STUDENT TO-DO:
  *  Handles Misses, evicting from the cache if necessary.
  *  Fill out the evicted_line_t struct with info regarding the evicted line.
  */
-evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation, byte_t *incoming_data) {
+evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
+                            byte_t *incoming_data) {
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
-    evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
+    evicted_line->data = (byte_t *)calloc(cache->B, sizeof(byte_t));
 
     // Student TODO
 }
@@ -188,8 +233,7 @@ void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
  * Called by cache-runner; no need to modify it if you implement
  * check_hit() and handle_miss()
  */
-void access_data(cache_t *cache, uword_t addr, operation_t operation)
-{
-    if(!check_hit(cache, addr, operation))
+void access_data(cache_t *cache, uword_t addr, operation_t operation) {
+    if (!check_hit(cache, addr, operation))
         free(handle_miss(cache, addr, operation, NULL));
 }
