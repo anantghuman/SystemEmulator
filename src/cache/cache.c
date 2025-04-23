@@ -133,16 +133,8 @@ void free_cache(cache_t *cache) {
     free(cache->sets);
     free(cache);
 }
-unsigned int extract_index(uword_t addr) {
-    return (addr << 2) & 0b111;
-}
-
-unsigned int extract_tag(uword_t addr) {
-    return (addr >> 5) & 0b11111111;
-}
-
-unsigned int extract_offset(uword_t addr) {
-    return addr & 0b11;
+unsigned int extract_bitfield(uword_t addr, unsigned int b, unsigned int s) {
+    return (addr >> b) & ((1 << s) - 1);
 }
 /* STUDENT TO-DO:
  * Get the line for address contained in the cache
@@ -151,9 +143,12 @@ unsigned int extract_offset(uword_t addr) {
  */
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
     // Student TODO
-    unsigned int t = extract_tag(addr);
-    unsigned int i = extract_index(addr);
-    cache_line_t* line = (cache->sets)[i].lines;
+    unsigned S = cache->C / (cache->A * cache->B);
+    unsigned s = _log(S);
+    unsigned b = _log(cache->B);
+    unsigned i = extract_bitfield(addr, b, s);
+    unsigned t = addr >> (b+s);
+    cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
             return &line[j];
@@ -168,11 +163,14 @@ cache_line_t *get_line(cache_t *cache, uword_t addr) {
  */
 cache_line_t *select_line(cache_t *cache, uword_t addr) {
     // Student TODO
-    unsigned int t = extract_tag(addr);
-    unsigned int i = extract_index(addr);
-    cache_line_t* line = (cache->sets)[i].lines;
-    cache_line_t* empty = NULL;
-    cache_line_t* lru = NULL;
+    unsigned S = cache->C / (cache->A * cache->B);
+    unsigned s = _log(S);
+    unsigned b = _log(cache->B);
+    unsigned i = extract_bitfield(addr, b, s);
+    unsigned t = addr >> (b+s);
+    cache_line_t *line = (cache->sets)[i].lines;
+    cache_line_t *empty = NULL;
+    cache_line_t *lru = NULL;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
             return &line[j];
@@ -184,7 +182,9 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
             lru = &line[j];
         }
     }
-    return empty ? empty : lru;
+    if (empty) 
+        return empty;
+    return lru;
 }
 
 /*  STUDENT TO-DO:
@@ -193,9 +193,12 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
     // Student TODO
-    unsigned int t = extract_tag(addr);
-    unsigned int i = extract_index(addr);
-    cache_line_t* line = (cache->sets)[i].lines;
+    unsigned S = cache->C / (cache->A * cache->B);
+    unsigned s = _log(S);
+    unsigned b = _log(cache->B);
+    unsigned i = extract_bitfield(addr, b, s);
+    unsigned t = addr >> (b+s);
+    cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
             hit_count++;
@@ -220,6 +223,36 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     evicted_line->data = (byte_t *)calloc(cache->B, sizeof(byte_t));
 
     // Student TODO
+    unsigned S = cache->C / (cache->A * cache->B);
+    unsigned s = _log(S);
+    unsigned b = _log(cache->B);
+    unsigned i = extract_bitfield(addr, b, s);
+    unsigned t = addr >> (b+s);
+    cache_line_t *line = (cache->sets)[i].lines;
+    
+    if (line->valid == true) {
+        if (line->dirty == true) {
+            dirty_eviction_count++;
+            evicted_line->valid = true;
+            evicted_line->dirty = true;
+        } else {
+            clean_eviction_count++;
+            evicted_line->dirty = false;
+            evicted_line->valid = true;
+        }
+        evicted_line->addr = (line->tag << (b+s)) | i;
+        memcpy(evicted_line->data, line->data, cache->B);
+    }
+    line->tag = t;
+    line->valid = true;
+    if (operation == WRITE) {
+        line->dirty = true;
+    }
+    line->lru = next_lru++;
+    if (incoming_data) {
+        *line->data = *incoming_data;
+    }
+    return evicted_line;
 }
 
 /* STUDENT TO-DO:
@@ -228,9 +261,12 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     // Student TODO
-    unsigned int t = extract_tag(addr);
-    unsigned int i = extract_index(addr);
-    cache_line_t* line = (cache->sets)[i].lines;
+    unsigned S = cache->C / (cache->A * cache->B);
+    unsigned s = _log(S);
+    unsigned b = _log(cache->B);
+    unsigned i = extract_bitfield(addr, b, s);
+    unsigned t = addr >> (b+s);
+    cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
             memcpy(dest, line[j].data, sizeof(word_t));
@@ -245,16 +281,18 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     // Student TODO
-    unsigned int t = extract_tag(addr);
-    unsigned int i = extract_index(addr);
-    cache_line_t* line = (cache->sets)[i].lines;
+    unsigned S = cache->C / (cache->A * cache->B);
+    unsigned s = _log(S);
+    unsigned b = _log(cache->B);
+    unsigned i = extract_bitfield(addr, b, s);
+    unsigned t = addr >> (b+s);
+    cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
-            memcpy(line[j].data, val, sizeof(word_t));
+            memcpy(line[j].data, &val, sizeof(word_t));
             return;
         }
     }
-    
 }
 
 /*
