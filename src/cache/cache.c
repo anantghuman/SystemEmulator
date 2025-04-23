@@ -247,6 +247,8 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     line->valid = true;
     if (operation == WRITE) {
         line->dirty = true;
+    } else {
+        line->dirty = false;
     }
     line->lru = next_lru++;
     if (incoming_data) {
