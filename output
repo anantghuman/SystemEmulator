@@ -1,7 +1,7 @@
 Welcome to the C S 429 System Emulator
 
 Author: [1m[31mReference Implementation[0m
-Run begun at Tue Apr 22 18:31:16 2025
+Run begun at Wed Apr 23 17:47:01 2025
 
 
 
@@ -308,7 +308,7 @@ W: HLT   [dst, val_ex, val_mem] = [X0, 0x0, 0x0], status: HLT
 	 W_sigs: [dst_sel, wval_sel, w_enable] = [false, false, false], W_wval: 0x410180
 
 
-Run ended at Tue Apr 22 18:31:16 2025
+Run ended at Wed Apr 23 17:47:01 2025
 
 [1mGoodbye!
 

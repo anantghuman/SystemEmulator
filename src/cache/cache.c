@@ -147,7 +147,7 @@ cache_line_t *get_line(cache_t *cache, uword_t addr) {
     unsigned s = _log(S);
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
-    unsigned t = addr >> (b+s);
+    unsigned t = addr >> (b + s);
     cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
@@ -167,7 +167,7 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
     unsigned s = _log(S);
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
-    unsigned t = addr >> (b+s);
+    unsigned t = addr >> (b + s);
     cache_line_t *line = (cache->sets)[i].lines;
     cache_line_t *empty = NULL;
     cache_line_t *lru = NULL;
@@ -182,8 +182,7 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
             lru = &line[j];
         }
     }
-    if (empty) 
-        return empty;
+    if (empty) return empty;
     return lru;
 }
 
@@ -197,7 +196,7 @@ bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
     unsigned s = _log(S);
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
-    unsigned t = addr >> (b+s);
+    unsigned t = addr >> (b + s);
     cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
@@ -220,27 +219,25 @@ bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
 evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
                             byte_t *incoming_data) {
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
-    evicted_line->data = (byte_t *)calloc(cache->B, sizeof(byte_t));
-
+    evicted_line->data = calloc(cache->B, sizeof(byte_t));
     // Student TODO
     unsigned S = cache->C / (cache->A * cache->B);
     unsigned s = _log(S);
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
-    unsigned t = addr >> (b+s);
+    unsigned t = addr >> (b + s);
     cache_line_t *line = select_line(cache, addr);
-    
+
     if (line->valid == true) {
         if (line->dirty == true) {
             dirty_eviction_count++;
-            evicted_line->valid = true;
             evicted_line->dirty = true;
         } else {
             clean_eviction_count++;
             evicted_line->dirty = false;
-            evicted_line->valid = true;
         }
-        evicted_line->addr = (line->tag << (b+s)) | i;
+        evicted_line->valid = true;
+        evicted_line->addr = (line->tag << (b + s)) | (i << b);
         memcpy(evicted_line->data, line->data, cache->B);
     }
     line->tag = t;
@@ -252,7 +249,7 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     }
     line->lru = next_lru++;
     if (incoming_data) {
-        *line->data = *incoming_data;
+        memcpy(line->data, incoming_data, cache->B);
     }
     return evicted_line;
 }
@@ -267,11 +264,12 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     unsigned s = _log(S);
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
-    unsigned t = addr >> (b+s);
+    unsigned t = addr >> (b + s);
+    unsigned f = addr & ((1 << b) - 1);
     cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
-            memcpy(dest, line[j].data, sizeof(word_t));
+            memcpy(dest, line[j].data + f, sizeof(word_t));
             return;
         }
     }
@@ -287,11 +285,12 @@ void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     unsigned s = _log(S);
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
-    unsigned t = addr >> (b+s);
+    unsigned t = addr >> (b + s);
+    unsigned f = addr & ((1 << b) - 1);
     cache_line_t *line = (cache->sets)[i].lines;
     for (int j = 0; j < cache->A; j++) {
         if (line[j].valid && line[j].tag == t) {
-            memcpy(line[j].data, &val, sizeof(word_t));
+            memcpy(line[j].data + f, &val, sizeof(word_t));
             return;
         }
     }
