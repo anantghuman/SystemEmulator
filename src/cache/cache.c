@@ -228,7 +228,7 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     unsigned b = _log(cache->B);
     unsigned i = extract_bitfield(addr, b, s);
     unsigned t = addr >> (b+s);
-    cache_line_t *line = (cache->sets)[i].lines;
+    cache_line_t *line = select_line(cache, addr);
     
     if (line->valid == true) {
         if (line->dirty == true) {
