@@ -246,7 +246,8 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     line->dirty = (operation == WRITE);
     line->valid = true;
     line->lru = ++next_lru;
-    memcpy(line->data, incoming_data, cache->B);
+    if (incoming_data)
+        memcpy(line->data, incoming_data, cache->B);
     return evicted_line;
 }
 
